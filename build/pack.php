@@ -87,9 +87,37 @@ $stub = generateStub($base64);
 file_put_contents($outputPath, $stub);
 
 $finalSize = filesize($outputPath);
+echo "   install.php: " . formatBytes($finalSize) . "\n";
+
+// --- Step 5: Create distribution zip ---
+echo "Step 5: Creating distribution zip...\n";
+
+$configSource = $projectRoot . '/installer-config.php';
+$zipOutputPath = $outputDir . '/installer.zip';
+
+if (class_exists('ZipArchive')) {
+    $zip = new ZipArchive();
+    if ($zip->open($zipOutputPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+        $zip->addFile($outputPath, 'install.php');
+        if (file_exists($configSource)) {
+            $zip->addFile($configSource, 'installer-config.php');
+        }
+        $zip->close();
+        $zipSize = filesize($zipOutputPath);
+        echo "   installer.zip: " . formatBytes($zipSize) . "\n";
+    } else {
+        echo "   Warning: Could not create zip. ZipArchive failed to open.\n";
+        echo "   install.php is still available at: {$outputPath}\n";
+    }
+} else {
+    echo "   Warning: ZipArchive not available. Skipping zip creation.\n";
+    echo "   install.php is still available at: {$outputPath}\n";
+}
+
 echo "\nBuild complete!\n";
-echo "Output: {$outputPath}\n";
-echo "Size: " . formatBytes($finalSize) . "\n";
+echo "Output directory: {$outputDir}/\n";
+echo "   install.php         — the installer (for manual distribution)\n";
+echo "   installer.zip       — ready to distribute (install.php + installer-config.php)\n";
 
 // ============================================================
 // Build functions

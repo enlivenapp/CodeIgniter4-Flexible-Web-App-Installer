@@ -25,7 +25,7 @@ This project produces a single self-extracting `install.php` file that walks you
 
 **As an app developer**, you configure what your app needs in `installer-config.php`. The installer handles the rest: environment checks, downloading your app, writing `.env`, running migrations, creating the admin user.
 
-Your end user uploads two files and clicks through a wizard. That is it.
+Your end user downloads a single zip, extracts it on their server, and clicks through a wizard. That is it.
 
 ---
 
@@ -45,12 +45,9 @@ Your end user uploads two files and clicks through a wizard. That is it.
    ```bash
    php build/pack.php
    ```
+   This produces `dist/installer.zip` containing both `install.php` and your `installer-config.php`.
 
-4. **Upload to your server:**
-   - `dist/install.php`
-   - Your customized `installer-config.php`
-
-5. **Navigate to `install.php` in a browser** and follow the wizard.
+4. **Distribute `dist/installer.zip` to your users with the filename of your choosing.** They extract it on their server and navigate to `install.php` in a browser.
 
 ---
 
