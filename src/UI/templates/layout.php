@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title><?= htmlspecialchars($stepTitle, ENT_QUOTES, 'UTF-8') ?> &mdash; <?= htmlspecialchars($config['branding']['name'] ?? 'Installer', ENT_QUOTES, 'UTF-8') ?></title>
+    <!-- Tailwind CSS + DaisyUI: CDN first, inline fallback from build -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" onerror="this.remove()">
+    <script src="https://cdn.tailwindcss.com" onerror="this.remove()"></script>
     <style>
         /* DAISYUI_CSS */
     </style>
@@ -133,6 +136,8 @@
         </div>
     </footer>
 
+    <!-- Alpine.js: CDN first, inline fallback from build -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js" onerror="this.remove()"></script>
     <script>
         /* ALPINE_JS */
     </script>
