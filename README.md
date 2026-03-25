@@ -2,7 +2,7 @@
 
 **By EnlivenApp**
 
-A generic, reusable web-based installer for applications built on CodeIgniter 4. Upload two files, open a browser, and your app is installed -- no command line required.
+A generic, reusable web-based installer for CodeIgniter 4 applications. Drop it into your project, configure what your app needs, and give your users a guided setup wizard -- no CLI required on their end, probably.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
@@ -10,22 +10,22 @@ A generic, reusable web-based installer for applications built on CodeIgniter 4.
 
 ## What Is This?
 
-This project produces a single self-extracting `install.php` file that walks end users through installing any CI4 application via a step-by-step web wizard. Think WordPress-style installation, but for CodeIgniter 4 apps.
+This project produces a single self-extracting `install.php` file that walks your users through installing your CI4 application via a step-by-step web wizard. You define what your app needs in a config file; the installer handles environment checks, downloading, configuration, migrations, and admin setup.
 
 **Key features:**
 
 - Works on shared hosting with no CLI, SSH, or composer access
 - Supports Apache, Nginx, LiteSpeed, and IIS
-- All four CI4 database drivers: MySQLi, PostgreSQL, SQLite3, SQL Server
+- Supports all four CI4 database drivers: MySQLi, PostgreSQL, SQLite3, SQL Server
 - Filesystem abstraction: Direct PHP, FTP, FTPS, SSH2
 - Graduated fallback chains for every operation -- if the preferred method fails, there is always a next option or manual instructions
 - Polished UI with DaisyUI and Alpine.js
 - Detects server capabilities automatically and adapts
-- Self-deletes after installation
+- Attempts to self-delete after installation
 
 **As an app developer**, you configure what your app needs in `installer-config.php`. The installer handles the rest: environment checks, downloading your app, writing `.env`, running migrations, creating the admin user.
 
-**As an end user**, you upload two files and click through a wizard. That is it.
+Your end user uploads two files and clicks through a wizard. That is it.
 
 ---
 
@@ -420,22 +420,53 @@ Skips admin creation entirely. Use this when your app handles first-run registra
 
 ---
 
-## Preparing Your Release ZIP
+## Creating Your App's Download ZIP
 
-The `source.zip` URL must point to a zip file that the installer can download. For servers without composer, the zip must include the `vendor/` directory.
+The `source.zip` value in your config is a URL where the installer can download your application. When a user runs the installer, it fetches your app from this URL. For servers without composer, the zip **must include the `vendor/` directory** — otherwise there's no way to get the dependencies.
 
-### Building a release zip locally
+### Step 1: Build the zip
+
+From your CI4 app's root directory:
 
 ```bash
-cd your-ci4-app/
 composer install --no-dev --optimize-autoloader
 zip -r my-app-v1.0.0.zip . -x '.git/*' -x 'tests/*' -x '.env'
 ```
 
-### GitHub Actions example
+This creates a zip with everything your app needs to run, minus dev dependencies and sensitive files.
+
+### Step 2: Upload it somewhere
+
+The zip needs to be hosted at a publicly accessible URL. Some options:
+
+- **Your own website** — upload to your server (e.g., `https://yoursite.com/downloads/my-app-v1.0.0.zip`)
+- **GitHub Releases** — if your project is on GitHub, create a Release and attach the zip file as an asset
+- **Any file host** — anywhere that gives you a direct download link
+
+The key requirement: the URL must be a **direct download link** to the zip file, not a page with a download button.
+
+### Step 3: Set the URL in your config
+
+```php
+'source' => [
+    'zip' => 'https://yoursite.com/downloads/my-app-v1.0.0.zip',
+],
+```
+
+That's it. The installer downloads from this URL when your user runs it.
+
+### Automating builds with GitHub Actions (optional, advanced)
+
+If your project is on GitHub, you can automate the zip-building process so you never have to do it manually. GitHub Actions is a free automation service built into GitHub — when something happens in your repo (like tagging a new version), it runs commands for you on GitHub's servers.
+
+The example below does this: when you push a version tag (like `v1.0.0`), GitHub automatically builds the zip and attaches it to a Release page.
+
+Create a file at `.github/workflows/build-release.yml` in your app's repo:
 
 ```yaml
 name: Build Release
+
+# This runs whenever you push a tag starting with "v" (e.g., v1.0.0)
 on:
   push:
     tags: ['v*']
@@ -444,32 +475,51 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # Check out your code
       - uses: actions/checkout@v4
 
+      # Set up PHP on the build server
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
 
+      # Install your app's composer dependencies (production only)
       - name: Install dependencies
         run: composer install --no-dev --optimize-autoloader
 
+      # Create the zip, excluding files your users don't need
       - name: Create release zip
         run: |
           zip -r release.zip . \
             -x '.git/*' -x 'tests/*' -x '.env' \
             -x '.github/*' -x 'phpunit.xml.dist'
 
+      # Attach the zip to a GitHub Release page.
+      # softprops/action-gh-release is a widely-used community action
+      # that handles creating the Release and uploading files.
+      # You don't need to install anything — GitHub downloads it
+      # automatically when the workflow runs.
       - name: Upload release
         uses: softprops/action-gh-release@v1
         with:
           files: release.zip
 ```
 
-Then set your `source.zip` to:
+Once this is set up, tag a release and push it:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub builds the zip automatically. Your download URL will be:
+
 ```
 https://github.com/your-org/your-app/releases/latest/download/release.zip
 ```
+
+If you don't use GitHub or don't want automation, just build the zip manually and upload it. The installer doesn't care how the zip got there — it just needs the URL.
 
 ---
 
