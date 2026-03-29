@@ -45,9 +45,17 @@ Your end user downloads a single zip, extracts it on their server, and clicks th
    ```bash
    php build/pack.php
    ```
-   This produces `dist/installer.zip` containing both `install.php` and your `installer-config.php`.
+   This produces `dist/install.zip` containing both `install.php` and your `installer-config.php`.
 
-4. **Distribute `dist/installer.zip` to your users with the filename of your choosing.** They extract it on their server and navigate to `install.php` in a browser.
+   To name the output for your app:
+   ```bash
+   php build/pack.php --name=my-app-install
+   ```
+   This produces `dist/my-app-install.zip` instead.
+
+   If PHP's ZipArchive extension isn't available, the build produces the standalone php file in `dist/` instead. You'll need to distribute it alongside `installer-config.php` or create the zip file yourself.
+
+4. **Distribute the zip to your users.** They extract it on their server and navigate to the installer in a browser.
 
 ---
 
