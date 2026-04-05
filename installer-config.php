@@ -28,9 +28,7 @@ return [
     // --- Download Source ---
     // source.zip is REQUIRED. composer and git are optional enhancements.
     'source' => [
-        'composer' => '',  // Packagist package name, e.g. 'vendor/package'
-        'git'      => '',  // Git repository URL
-        'zip'      => '',  // REQUIRED: Direct download URL to a zip file
+        'zip' => '',  // REQUIRED: Direct download URL to a zip file
     ],
 
     // --- Server Requirements ---
@@ -74,7 +72,7 @@ return [
     ],
 
     // --- Authentication ---
-    // system: shield, ion_auth, myth_auth, custom, none
+    // system: shield, custom, none
     'auth' => [
         'system'  => 'none',
         'collect' => [],     // e.g. ['username', 'email', 'password']

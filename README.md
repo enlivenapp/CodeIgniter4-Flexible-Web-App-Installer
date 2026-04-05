@@ -81,11 +81,8 @@ The `installer-config.php` file controls everything the installer does. Every ke
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
-| `zip` | string | **Yes** | Direct download URL to a zip file containing your app. This is the universal fallback -- it must always be provided. |
-| `composer` | string | No | Packagist package name (e.g., `'vendor/package'`). Used when composer is available on the server. |
-| `git` | string | No | Git repository URL. Used when git is available on the server. |
+| `zip` | string | **Yes** | Direct download URL to a zip file containing your app. |
 
-The installer picks the best download method based on what the server supports: composer (fastest) > git > cURL download > PHP streams > manual upload instructions.
 
 **Important:** The zip file must include the `vendor/` directory if you want it to work on servers without composer. See "Preparing Your Release ZIP" below.
 
@@ -141,9 +138,9 @@ Controls admin user creation during installation.
 
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
-| `system` | string | No (default: `'none'`) | Auth library. Options: `shield`, `ion_auth`, `myth_auth`, `custom`, `none`. |
+| `system` | string | No (default: `'none'`) | Auth library. Options: `shield`, `custom`, `none`. |
 | `collect` | array | If system is not `none` | Fields to show in the wizard. Example: `['username', 'email', 'password']` |
-| `group` | string | For shield/ion_auth/myth_auth | Group or role to assign the admin. Example: `'superadmin'` |
+| `group` | string | For shield | Group or role to assign the admin. Example: `'superadmin'` |
 
 **For `custom` auth systems**, additional keys are required:
 
@@ -185,7 +182,6 @@ Probes the server by actually attempting operations (not just checking flags):
 - Server software (Apache, Nginx, LiteSpeed, IIS)
 - Available database drivers
 - exec() and shell_exec() availability
-- Composer and Git presence
 - Filesystem ownership (determines Direct vs FTP/SSH access)
 - HTTPS status
 - Outbound HTTP connectivity
@@ -270,8 +266,6 @@ These are used when available but never required:
 | Capability | Benefit |
 |------------|---------|
 | exec() | Enables composer, git, and spark commands |
-| Composer | Fastest download method (composer create-project) |
-| Git | Second-fastest download method (git clone) |
 | cURL | Preferred HTTP download method |
 | ZipArchive | Preferred extraction method |
 
@@ -352,7 +346,7 @@ php build/pack.php
 
 ## Auth Adapters
 
-The installer supports five auth systems:
+The installer supports one auth system:
 
 ### Shield (CodeIgniter Shield)
 
@@ -364,31 +358,7 @@ The installer supports five auth systems:
 ],
 ```
 
-Creates the user via Shield's UserModel and assigns the specified group.
-
-### IonAuth
-
-```php
-'auth' => [
-    'system'  => 'ion_auth',
-    'collect' => ['username', 'email', 'password'],
-    'group'   => 'admin',
-],
-```
-
-Uses IonAuth's register() method and group assignment.
-
-### Myth:Auth
-
-```php
-'auth' => [
-    'system'  => 'myth_auth',
-    'collect' => ['email', 'password'],
-    'group'   => 'admin',
-],
-```
-
-Creates a user entity via Myth:Auth's UserModel.
+Creates the admin user via direct SQL inserts into Shield's `users`, `auth_identities`, and `auth_groups_users` tables. No CI4 bootstrap required.
 
 ### Generic (Custom Auth)
 
@@ -427,7 +397,7 @@ Skips admin creation entirely. Use this when your app handles first-run registra
 
 ## Creating Your App's Download ZIP
 
-The `source.zip` value in your config is a URL where the installer can download your application. When a user runs the installer, it fetches your app from this URL. For servers without composer, the zip **must include the `vendor/` directory** — otherwise there's no way to get the dependencies.
+The `source.zip` value in your config is a URL where the installer can download your application. When a user runs the installer, it fetches your app from this URL. The zip **must include the `vendor/` directory** — otherwise there's no way to get the dependencies.
 
 ### Step 1: Build the zip
 
@@ -543,3 +513,23 @@ You are free to use, modify, and distribute this software for any purpose, inclu
 Contributions are welcome. Please open an issue to discuss proposed changes before submitting a pull request.
 
 [Report an issue](https://github.com/enlivenapp/CodeIgniter4-Flexible-Web-App-Installer/issues)
+
+---
+
+## Screenshots
+
+![Welcome](images/step1.png)
+
+![System Requirements](images/step2.png)
+
+![Filesystem Access](images/step3.png)
+
+![Database Setup](images/step4.png)
+
+![App Configuration](images/step5.png)
+
+![Admin Account](images/step7.png)
+
+![Installing](images/step8.png)
+
+![Installation Complete](images/completed.png)
