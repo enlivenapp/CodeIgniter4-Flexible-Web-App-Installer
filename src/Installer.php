@@ -664,23 +664,30 @@ class Installer
     {
         $fs = $this->getFilesystem();
 
-        // Attempt to delete install.php via filesystem abstraction.
-        $installPhp = $this->targetDir . '/install.php';
-        $deleted    = false;
+        // Attempt to delete all installer files.
+        $scriptBase    = basename($_SERVER['SCRIPT_NAME'] ?? 'install.php');
+        $installerFiles = [
+            $this->targetDir . '/' . $scriptBase,
+            $this->targetDir . '/' . pathinfo($scriptBase, PATHINFO_FILENAME) . '.zip',
+            $this->targetDir . '/installer-config.php',
+        ];
 
-        if (file_exists($installPhp)) {
-            $deleteResult = $fs->delete($installPhp);
-            $deleted      = $deleteResult->success;
+        $deleted = true;
+
+        foreach ($installerFiles as $file) {
+            if (file_exists($file)) {
+                $result = $fs->delete($file);
+                if (! $result->success) {
+                    $deleted = false;
+                }
+            }
         }
 
-        // Fallback: create install.lock if delete failed.
+        // Fallback: create install.lock if any deletes failed.
         if (! $deleted) {
             $lockFile = $this->targetDir . '/install.lock';
-            @file_put_contents($lockFile, date('Y-m-d H:i:s') . ' — Installation complete. Delete this file to re-run the installer.');
+            @file_put_contents($lockFile, date('Y-m-d H:i:s') . ' -- Installation complete. Delete this file to re-run the installer.');
         }
-
-        // Remove the temp extraction directory.
-        $this->cleanupExtractedDir();
 
         // Build the post-install URL from the base URL before clearing session.
         $configuration  = $this->getFromSession(self::SESS_CONFIGURATION, []);
@@ -690,11 +697,17 @@ class Installer
         // Clear session data.
         $this->clearInstallSession();
 
-        return $this->renderer->render('complete', [
-            'selfDeleted'    => $deleted,
-            'postInstallUrl' => $postInstallUrl,
-            'branding'       => $this->config['branding'],
+        // Render BEFORE cleanup — templates live inside the extracted directory.
+        $html = $this->renderer->render('complete', [
+            'installerRemoved' => $deleted,
+            'postInstallUrl'   => $postInstallUrl,
+            'branding'         => $this->config['branding'],
         ]);
+
+        // Remove the temp extraction directory after rendering.
+        $this->cleanupExtractedDir();
+
+        return $html;
     }
 
     // -------------------------------------------------------------------------
